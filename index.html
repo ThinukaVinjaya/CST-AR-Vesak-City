@@ -5,78 +5,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <title>AR Vesak City</title>
     <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { overflow: hidden; background: #000; font-family: sans-serif; }
-      canvas { display: block; width: 100vw; height: 100vh; }
+      * { margin:0; padding:0; box-sizing:border-box; }
+      body { overflow:hidden; background:#000; font-family:sans-serif; }
 
       #loading {
-        position: fixed; inset: 0;
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        background: rgba(0,0,0,0.92); color: #fff; z-index: 20; gap: 14px;
-        text-align: center; padding: 32px;
+        position:fixed; inset:0;
+        display:flex; flex-direction:column; align-items:center; justify-content:center;
+        background:#000; color:#fff; z-index:20; gap:16px; text-align:center; padding:32px;
       }
-      #loading .title { font-size: 24px; font-weight: bold; color: #ffd580; letter-spacing: 1px; }
-      #loading .sub   { font-size: 13px; color: #bbb; line-height: 1.7; }
-      #loading .hint  { font-size: 11px; color: #888; margin-top: 6px; }
+      .title { font-size:26px; font-weight:bold; color:#ffd580; letter-spacing:1px; }
+      .sub   { font-size:14px; color:#bbb; line-height:1.8; }
+
+      #progressWrap { width:240px; }
+      #progLabel { font-size:13px; color:#ffd580; margin-bottom:8px; }
+      #progTrack { background:rgba(255,255,255,0.12); border-radius:8px; height:7px; overflow:hidden; }
+      #progFill  { height:100%; background:linear-gradient(90deg,#ffd580,#ff9933); border-radius:8px; width:0%; transition:width 0.3s; }
+      #errMsg    { color:#ff9966; font-size:12px; margin-top:8px; display:none; line-height:1.5; }
 
       #statusBar {
-        position: fixed; bottom: 24px; left: 50%;
-        transform: translateX(-50%);
-        background: rgba(0,0,0,0.65); backdrop-filter: blur(8px);
-        color: #fff; font-size: 13px; padding: 10px 20px; border-radius: 24px;
-        z-index: 6; display: none; text-align: center;
-        border: 1px solid rgba(255,255,255,0.12); transition: opacity 0.4s;
-        max-width: 88vw; white-space: normal;
+        position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+        background:rgba(0,0,0,0.65); backdrop-filter:blur(8px);
+        color:#fff; font-size:13px; padding:10px 20px; border-radius:24px;
+        z-index:6; display:none; text-align:center;
+        border:1px solid rgba(255,255,255,0.12); transition:opacity 0.4s;
+        max-width:88vw; white-space:normal;
       }
       #ringWrap {
-        position: fixed; bottom: 26%; left: 50%; transform: translateX(-50%);
-        width: 110px; height: 110px; display: none; z-index: 5; pointer-events: none;
+        position:fixed; bottom:26%; left:50%; transform:translateX(-50%);
+        width:110px; height:110px; display:none; z-index:5; pointer-events:none;
       }
-      #ringWrap svg { width: 100%; height: 100%; }
-      #ringBg  { fill: none; stroke: rgba(255,255,255,0.12); stroke-width: 5; }
-      #ringFill{ fill: none; stroke: #00ffcc; stroke-width: 5; stroke-linecap: round;
-                 stroke-dasharray: 283; stroke-dashoffset: 283;
-                 transform: rotate(-90deg); transform-origin: 50% 50%;
-                 transition: stroke-dashoffset 0.25s ease; }
-      #ringPct { fill: #fff; font-size: 18px; font-weight: 600;
-                 text-anchor: middle; dominant-baseline: central; }
+      #ringWrap svg { width:100%; height:100%; }
+      #ringBg   { fill:none; stroke:rgba(255,255,255,0.12); stroke-width:5; }
+      #ringFill { fill:none; stroke:#00ffcc; stroke-width:5; stroke-linecap:round;
+                  stroke-dasharray:283; stroke-dashoffset:283;
+                  transform:rotate(-90deg); transform-origin:50% 50%;
+                  transition:stroke-dashoffset 0.25s ease; }
+      #ringPct  { fill:#fff; font-size:18px; font-weight:600; text-anchor:middle; dominant-baseline:central; }
+
       #nightBadge {
-        position: fixed; top: 14px; right: 14px;
-        background: rgba(255,180,30,0.18); border: 1px solid rgba(255,180,30,0.4);
-        color: #ffc84a; font-size: 12px; padding: 5px 11px; border-radius: 14px;
-        z-index: 7; display: none;
+        position:fixed; top:14px; right:14px;
+        background:rgba(255,180,30,0.18); border:1px solid rgba(255,180,30,0.4);
+        color:#ffc84a; font-size:12px; padding:5px 11px; border-radius:14px;
+        z-index:7; display:none;
       }
       #placedTick {
-        position: fixed; top: 50%; left: 50%;
-        transform: translate(-50%,-50%) scale(0);
-        background: rgba(0,200,120,0.22); border: 2px solid #00d484;
-        border-radius: 50%; width: 72px; height: 72px;
-        display: flex; align-items: center; justify-content: center;
-        color: #00d484; font-size: 32px; z-index: 8; pointer-events: none;
-        transition: transform 0.35s cubic-bezier(.34,1.56,.64,1), opacity 0.5s; opacity: 0;
+        position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0);
+        background:rgba(0,200,120,0.22); border:2px solid #00d484;
+        border-radius:50%; width:72px; height:72px;
+        display:flex; align-items:center; justify-content:center;
+        color:#00d484; font-size:32px; z-index:8; pointer-events:none;
+        transition:transform 0.35s cubic-bezier(.34,1.56,.64,1), opacity 0.5s; opacity:0;
       }
-      #modelProgress {
-        position: fixed; top: 60%; left: 50%; transform: translate(-50%, -50%);
-        color: #ffd580; font-size: 13px; text-align: center; z-index: 25;
-      }
-      .prog-bar-wrap { background: rgba(255,255,255,0.15); border-radius: 8px; height: 6px;
-                       overflow: hidden; margin-top: 10px; width: 200px; }
-      .prog-bar { height: 100%; background: linear-gradient(90deg,#ffd580,#ff9933);
-                  border-radius: 8px; width: 0%; transition: width 0.3s; }
-      #errMsg { color:#ff9966; font-size:12px; margin-top:10px; display:none; max-width:280px; line-height:1.5; }
     </style>
   </head>
   <body>
+
     <div id="loading">
       <div class="title">🪷 AR Vesak City</div>
-      <div class="sub" id="loadSub">Loading realistic models…<br>Please wait a moment.</div>
-      <div id="modelProgress">
-        <div id="progText">Initialising…</div>
-        <div class="prog-bar-wrap"><div class="prog-bar" id="progBar"></div></div>
+      <div class="sub" id="loadSub">Loading models from Cloudflare R2…</div>
+      <div id="progressWrap">
+        <div id="progLabel">Starting…</div>
+        <div id="progTrack"><div id="progFill"></div></div>
         <div id="errMsg"></div>
       </div>
-      <div class="hint">Tap "Start AR" then point your camera at the floor.</div>
     </div>
+
     <div id="ringWrap">
       <svg viewBox="0 0 100 100">
         <circle id="ringBg"   cx="50" cy="50" r="45"/>
@@ -88,475 +81,585 @@
     <div id="nightBadge">🌙 Night mode</div>
     <div id="placedTick">✓</div>
 
-    <script type="module">
-      import * as THREE from 'https://unpkg.com/three@0.150.1/build/three.module.js';
-      import { ARButton }    from 'https://unpkg.com/three@0.150.1/examples/jsm/webxr/ARButton.js';
-      import { GLTFLoader }  from 'https://unpkg.com/three@0.150.1/examples/jsm/loaders/GLTFLoader.js';
-      import { DRACOLoader } from 'https://unpkg.com/three@0.150.1/examples/jsm/loaders/DRACOLoader.js';
+    <!-- THREE r150 + AR -->
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/"
+      }
+    }
+    </script>
 
+    <script type="module">
+      import * as THREE          from 'three';
+      import { ARButton }        from 'three/addons/webxr/ARButton.js';
+      import { GLTFLoader }      from 'three/addons/loaders/GLTFLoader.js';
+      import { DRACOLoader }     from 'three/addons/loaders/DRACOLoader.js';
+
+      /* ── DOM ───────────────────────────────────────────────────────────── */
+      const elLoading  = document.getElementById('loading');
+      const elLoadSub  = document.getElementById('loadSub');
+      const elProgLabel= document.getElementById('progLabel');
+      const elProgFill = document.getElementById('progFill');
+      const elErrMsg   = document.getElementById('errMsg');
       const elStatus   = document.getElementById('statusBar');
       const elRing     = document.getElementById('ringWrap');
       const elRingFill = document.getElementById('ringFill');
       const elRingPct  = document.getElementById('ringPct');
       const elNight    = document.getElementById('nightBadge');
       const elTick     = document.getElementById('placedTick');
-      const elProgText = document.getElementById('progText');
-      const elProgBar  = document.getElementById('progBar');
-      const elErrMsg   = document.getElementById('errMsg');
-      const elLoadSub  = document.getElementById('loadSub');
 
-      // ── CORS-friendly CDN proxy for GitHub (raw.githack.com) ─────────────
-      // Format: https://rawcdn.githack.com/{user}/{repo}/{commit-or-branch}/{file}
-      const GH = 'https://rawcdn.githack.com/ThinukaVinjaya/vesakmodels/main/';
-
-      const MODEL_LIST = [
-        { key: 'buddha',       file: 'stone_buddha_statue.glb', label: 'Buddha Statue' },
-        { key: 'lotus1',       file: 'lotus1.glb',              label: 'Lotus Flower 1' },
-        { key: 'lotus2',       file: 'lotus_flower2.glb',       label: 'Lotus Flower 2' },
-        { key: 'lotusLantern', file: 'lotus_lanttern.glb',      label: 'Lotus Lantern' },
-        { key: 'vesakLantern', file: 'vesak_lanterns.glb',      label: 'Vesak Lantern' },
-        { key: 'stupa',        file: 'sthupa_srilanka.glb',     label: 'Stupa' },
+      /* ── Cloudflare R2 model URLs (CORS-open) ──────────────────────────── */
+      const R2 = 'https://pub-7cbad791f95e4c9680981f095fab45e1.r2.dev/';
+      const MODELS = [
+        { key:'buddha',       url: R2+'stone_buddha_statue.glb', label:'Buddha Statue'   },
+        { key:'lotus1',       url: R2+'lotus1.glb',              label:'Lotus Flower 1'  },
+        { key:'lotus2',       url: R2+'lotus_flower2.glb',       label:'Lotus Flower 2'  },
+        { key:'lotusLantern', url: R2+'lotus_lanttern.glb',      label:'Lotus Lantern'   },
+        { key:'vesakLantern', url: R2+'vesak_lanterns.glb',      label:'Vesak Lantern'   },
+        { key:'stupa',        url: R2+'sthupa_srilanka.glb',     label:'Sri Lanka Stupa' },
       ];
 
-      const CIRCUM       = 2 * Math.PI * 45;
-      const FRAMES_DAY   = 18;
-      const FRAMES_NIGHT = 5;
-      const DRIFT_DAY    = 0.06;
-      const DRIFT_NIGHT  = 0.18;
-      const FALLBACK_MS  = 3500;
+      /* ── GLTF / DRACO loader ───────────────────────────────────────────── */
+      const draco = new DRACOLoader();
+      draco.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.5/');
+      const gltf = new GLTFLoader();
+      gltf.setDRACOLoader(draco);
 
-      let camera, scene, renderer, reticle;
-      let hitTestSource = null, hitTestSourceRequested = false;
-      let placed = false, sessionStartTime = null;
-      let stableCount = 0;
-      const lastHitPos = new THREE.Vector3();
-      let isNightMode = false;
-      const flyingLanterns = [], pathLights = [], particleGroups = [];
-      const loadedModels = {};
+      const cache = {};   // key → THREE.Group
 
-      // ── GLTF Loader ──────────────────────────────────────────────────────
-      const dracoLoader = new DRACOLoader();
-      dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.5/');
-      const gltfLoader = new GLTFLoader();
-      gltfLoader.setDRACOLoader(dracoLoader);
-
-      // ── Load one model with timeout + fallback URL ────────────────────────
-      function loadModel(key, file, label) {
-        return new Promise((resolve) => {
-          const urls = [
-            GH + file,
-            'https://raw.githubusercontent.com/ThinukaVinjaya/vesakmodels/main/' + file,
-          ];
-          let tried = 0;
-
-          function tryLoad() {
-            const url = urls[tried];
-            elProgText.textContent = `Loading: ${label}…`;
-
-            const timeout = setTimeout(() => {
-              tried++;
-              if (tried < urls.length) { tryLoad(); }
-              else {
-                console.warn(`All URLs failed for ${key}`);
-                elErrMsg.style.display = 'block';
-                elErrMsg.textContent = `⚠️ Some models couldn't load (CORS). The scene will use fallback shapes for missing models.`;
-                resolve(null);
-              }
-            }, 12000);
-
-            gltfLoader.load(
-              url,
-              (gltf) => {
-                clearTimeout(timeout);
-                loadedModels[key] = gltf.scene;
-                resolve(gltf.scene);
-              },
-              undefined,
-              (err) => {
-                clearTimeout(timeout);
-                tried++;
-                if (tried < urls.length) { tryLoad(); }
-                else {
-                  console.warn(`Failed: ${key}`, err);
-                  elErrMsg.style.display = 'block';
-                  elErrMsg.textContent = `⚠️ Some models couldn't load due to CORS. Scene will use fallbacks.`;
-                  resolve(null);
-                }
-              }
-            );
-          }
-          tryLoad();
-        });
-      }
-
-      async function preloadModels() {
-        const total = MODEL_LIST.length;
+      /* ── Preload all models ────────────────────────────────────────────── */
+      async function preload() {
+        const total = MODELS.length;
         for (let i = 0; i < total; i++) {
-          const { key, file, label } = MODEL_LIST[i];
-          await loadModel(key, file, label);
-          const pct = ((i + 1) / total) * 100;
-          elProgBar.style.width = pct + '%';
-          elProgText.textContent = `${i + 1} / ${total} loaded`;
+          const { key, url, label } = MODELS[i];
+          elProgLabel.textContent = `Loading: ${label} (${i+1}/${total})`;
+          elProgFill.style.width  = `${(i/total)*100}%`;
+
+          try {
+            const result = await new Promise((res, rej) => {
+              gltf.load(url, res, undefined, rej);
+            });
+            cache[key] = result.scene;
+          } catch(e) {
+            console.error(`Failed: ${key}`, e);
+            elErrMsg.style.display = 'block';
+            elErrMsg.textContent   = `⚠️ Could not load "${label}" — it will use a placeholder.`;
+            cache[key] = null;
+          }
         }
-        elProgText.textContent = '✅ Models ready!';
-        elLoadSub.textContent  = 'Tap "Start AR" below.';
-        setTimeout(() => {
-          document.getElementById('loading').style.display = 'none';
-        }, 800);
+
+        elProgFill.style.width  = '100%';
+        elProgLabel.textContent = '✅ All models loaded!';
+        elLoadSub.textContent   = 'Tap "Start AR" then point at the floor.';
+        setTimeout(() => elLoading.style.display = 'none', 900);
       }
 
-      // ── Fallback geometry if model failed to load ─────────────────────────
-      function makeFallback(type) {
-        const g = new THREE.Group();
-        let mesh;
-        if (type === 'buddha') {
-          mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.4,1.8,12), new THREE.MeshStandardMaterial({color:0xf3e5ab}));
-        } else if (type === 'stupa') {
-          mesh = new THREE.Mesh(new THREE.ConeGeometry(0.5,2.2,12), new THREE.MeshStandardMaterial({color:0xffffff,roughness:0.5}));
-        } else if (type === 'lotus1' || type === 'lotus2') {
-          mesh = new THREE.Mesh(new THREE.SphereGeometry(0.12,8,8), new THREE.MeshStandardMaterial({color:0xff7fbf}));
-        } else if (type === 'lotusLantern') {
-          mesh = new THREE.Mesh(new THREE.SphereGeometry(0.15,8,8), new THREE.MeshStandardMaterial({color:0xffccaa,emissive:0xff9933,emissiveIntensity:1}));
+      /* ── Helpers ───────────────────────────────────────────────────────── */
+      function getModel(key, targetHeight) {
+        let root;
+        if (cache[key]) {
+          root = cache[key].clone(true);
+          root.traverse(n => { if (n.isMesh) { n.castShadow = true; n.receiveShadow = true; } });
         } else {
-          mesh = new THREE.Mesh(new THREE.BoxGeometry(0.25,0.35,0.12), new THREE.MeshStandardMaterial({color:0xff6633,emissive:0xff9933,emissiveIntensity:0.8}));
+          // Fallback primitive
+          const mats = {
+            buddha:       new THREE.MeshStandardMaterial({color:0xf3e5ab}),
+            stupa:        new THREE.MeshStandardMaterial({color:0xffffff,roughness:0.4}),
+            lotus1:       new THREE.MeshStandardMaterial({color:0xff7fbf}),
+            lotus2:       new THREE.MeshStandardMaterial({color:0xff99cc}),
+            lotusLantern: new THREE.MeshStandardMaterial({color:0xffaa55,emissive:0xff8800,emissiveIntensity:1}),
+            vesakLantern: new THREE.MeshStandardMaterial({color:0xff5522,emissive:0xff9933,emissiveIntensity:0.8}),
+          };
+          const geos = {
+            buddha:       new THREE.CylinderGeometry(0.2,0.3,1,10),
+            stupa:        new THREE.ConeGeometry(0.4,1.8,10),
+            lotus1:       new THREE.SphereGeometry(0.1,8,8),
+            lotus2:       new THREE.SphereGeometry(0.1,8,8),
+            lotusLantern: new THREE.SphereGeometry(0.12,8,8),
+            vesakLantern: new THREE.BoxGeometry(0.2,0.3,0.1),
+          };
+          root = new THREE.Group();
+          root.add(new THREE.Mesh(geos[key]||new THREE.BoxGeometry(0.2,0.2,0.2), mats[key]||new THREE.MeshStandardMaterial({color:0xaaaaaa})));
         }
-        g.add(mesh);
-        return g;
-      }
 
-      // ── Clone / fit model ─────────────────────────────────────────────────
-      function fitModel(key, targetSize) {
-        let root = loadedModels[key] ? loadedModels[key].clone(true) : makeFallback(key);
-        root.scale.setScalar(1);
-        root.traverse(n => { if (n.isMesh) { n.castShadow = true; n.receiveShadow = true; } });
+        // Scale to targetHeight
         const box  = new THREE.Box3().setFromObject(root);
         const size = box.getSize(new THREE.Vector3());
-        const maxD = Math.max(size.x, size.y, size.z);
-        const s    = maxD > 0 ? targetSize / maxD : 1;
+        const s    = targetHeight / (size.y || 1);
         root.scale.setScalar(s);
-        const box2   = new THREE.Box3().setFromObject(root);
-        const center = box2.getCenter(new THREE.Vector3());
-        root.position.sub(center);
-        root.position.y += box2.getSize(new THREE.Vector3()).y / 2;
+
+        // Sit on floor (y=0)
+        const box2 = new THREE.Box3().setFromObject(root);
+        const c    = box2.getCenter(new THREE.Vector3());
+        root.position.x -= c.x;
+        root.position.z -= c.z;
+        root.position.y -= box2.min.y;   // bottom flush with floor
+
         return root;
       }
 
-      // ── Brightness sensor ─────────────────────────────────────────────────
-      let videoEl = null, brightnessCtx = null;
-      function startBrightnessSensor() {
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+      /* ── Three.js scene setup ──────────────────────────────────────────── */
+      const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.xr.enabled     = true;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type  = THREE.PCFSoftShadowMap;
+      Object.assign(renderer.domElement.style, {
+        position:'fixed', top:'0', left:'0', width:'100%', height:'100%', zIndex:'1'
+      });
+      document.body.appendChild(renderer.domElement);
+
+      const scene  = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.01, 60);
+
+      // Lights
+      scene.add(new THREE.HemisphereLight(0xffe4b5, 0x664422, 1.3));
+      const sun = new THREE.DirectionalLight(0xfff8e0, 0.9);
+      sun.position.set(4, 10, 5); sun.castShadow = true;
+      sun.shadow.mapSize.set(2048, 2048); scene.add(sun);
+      scene.add(new THREE.AmbientLight(0xffd580, 0.5));
+
+      // Reticle
+      const reticle = new THREE.Mesh(
+        new THREE.RingGeometry(0.08, 0.13, 32).rotateX(-Math.PI/2),
+        new THREE.MeshBasicMaterial({ color:0x00ffcc, transparent:true, opacity:0.9 })
+      );
+      reticle.matrixAutoUpdate = false;
+      reticle.visible = false;
+      scene.add(reticle);
+
+      // AR Button
+      const arBtn = ARButton.createButton(renderer, { requiredFeatures:['hit-test'] });
+      arBtn.style.zIndex = '10';
+      document.body.appendChild(arBtn);
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      /* ── AR state ──────────────────────────────────────────────────────── */
+      const CIRCUM       = 2*Math.PI*45;
+      const FRAMES_DAY   = 18, FRAMES_NIGHT = 5;
+      const DRIFT_DAY    = 0.06, DRIFT_NIGHT = 0.18;
+      const FALLBACK_MS  = 4000;
+
+      let hitSource = null, hitRequested = false;
+      let placed = false, sessionStart = null, stableCount = 0;
+      const lastHit = new THREE.Vector3();
+      let isNight = false;
+
+      const flyingLanterns = [], pathLights = [], particles = [];
+
+      // Brightness sensor
+      let vidEl = null, brCtx = null;
+      function startBrightness() {
+        navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false})
           .then(stream => {
-            videoEl = document.createElement('video');
-            videoEl.srcObject = stream; videoEl.playsInline = true; videoEl.muted = true; videoEl.play();
-            const bc = document.createElement('canvas'); bc.width = 32; bc.height = 32;
-            brightnessCtx = bc.getContext('2d', { willReadFrequently: true });
-            setInterval(() => {
-              if (!videoEl || videoEl.readyState < 2) return;
-              brightnessCtx.drawImage(videoEl, 0, 0, 32, 32);
-              const d = brightnessCtx.getImageData(0,0,32,32).data;
-              let lum = 0;
-              for (let i = 0; i < d.length; i+=4) lum += 0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
-              lum /= (32*32);
-              const night = lum < 60;
-              if (night !== isNightMode) { isNightMode = night; elNight.style.display = night ? 'block' : 'none'; }
-            }, 1200);
+            vidEl = document.createElement('video');
+            vidEl.srcObject = stream; vidEl.playsInline = true; vidEl.muted = true; vidEl.play();
+            const c = document.createElement('canvas'); c.width=32; c.height=32;
+            brCtx = c.getContext('2d',{willReadFrequently:true});
+            setInterval(()=>{
+              if(!vidEl||vidEl.readyState<2) return;
+              brCtx.drawImage(vidEl,0,0,32,32);
+              const d=brCtx.getImageData(0,0,32,32).data;
+              let l=0; for(let i=0;i<d.length;i+=4) l+=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+              l/=1024;
+              if((l<60)!==isNight){ isNight=l<60; elNight.style.display=isNight?'block':'none'; }
+            },1500);
           }).catch(()=>{});
       }
 
-      // ── Init ──────────────────────────────────────────────────────────────
-      await preloadModels();
-      init();
-      renderer.setAnimationLoop(render);
+      renderer.xr.addEventListener('sessionstart', () => {
+        elLoading.style.display = 'none';
+        sessionStart = performance.now();
+        showStatus('🔍 Aim at the floor ahead…');
+        elRing.style.display = 'block';
+        startBrightness();
+      });
+      renderer.xr.addEventListener('sessionend', () => {
+        hitSource=null; hitRequested=false; placed=false; stableCount=0; sessionStart=null;
+      });
 
-      function init() {
-        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.xr.enabled = true;
-        renderer.shadowMap.enabled = true;
-        Object.assign(renderer.domElement.style,{position:'absolute',top:'0',left:'0',width:'100%',height:'100%'});
-        document.body.appendChild(renderer.domElement);
-
-        scene  = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.01, 50);
-
-        scene.add(new THREE.HemisphereLight(0xffe4b5, 0x664422, 1.2));
-        const dir = new THREE.DirectionalLight(0xfff8e0, 0.8);
-        dir.position.set(3,8,4); dir.castShadow = true;
-        dir.shadow.mapSize.set(1024,1024); scene.add(dir);
-        scene.add(new THREE.AmbientLight(0xffd580, 0.4));
-
-        reticle = new THREE.Mesh(
-          new THREE.RingGeometry(0.08,0.12,32).rotateX(-Math.PI/2),
-          new THREE.MeshBasicMaterial({color:0x00ffcc,transparent:true,opacity:0.85})
-        );
-        reticle.matrixAutoUpdate = false; reticle.visible = false; scene.add(reticle);
-
-        document.body.appendChild(ARButton.createButton(renderer,{requiredFeatures:['hit-test']}));
-
-        renderer.xr.addEventListener('sessionstart',()=>{
-          document.getElementById('loading').style.display='none';
-          sessionStartTime = performance.now();
-          showStatus('🔍 Aim at the floor ahead…');
-          elRing.style.display='block';
-          startBrightnessSensor();
-        });
-        renderer.xr.addEventListener('sessionend',()=>{
-          hitTestSourceRequested=false; hitTestSource=null;
-          placed=false; stableCount=0; sessionStartTime=null;
-        });
-        window.addEventListener('resize',()=>{
-          camera.aspect=window.innerWidth/window.innerHeight;
-          camera.updateProjectionMatrix();
-          renderer.setSize(window.innerWidth,window.innerHeight);
-        });
-      }
-
-      function showStatus(msg){elStatus.textContent=msg;elStatus.style.display='block';elStatus.style.opacity='1';}
-      function hideStatus(){elStatus.style.opacity='0';setTimeout(()=>elStatus.style.display='none',400);}
-      function setRing(pct){
-        elRingFill.style.strokeDashoffset=CIRCUM*(1-pct/100);
-        elRingPct.textContent=Math.round(pct)+'%';
-        elRingFill.style.stroke=`hsl(${pct<50?174:174+(pct-50)*1.8},100%,55%)`;
-      }
-
-      // ── Render loop ───────────────────────────────────────────────────────
-      function render(timestamp, frame) {
+      /* ── Render loop ───────────────────────────────────────────────────── */
+      renderer.setAnimationLoop((ts, frame) => {
         if (frame) {
           const session  = renderer.xr.getSession();
           const refSpace = renderer.xr.getReferenceSpace();
-          if (!hitTestSourceRequested && session) {
-            session.requestReferenceSpace('viewer').then(rs=>{
-              session.requestHitTestSource({space:rs}).then(src=>{hitTestSource=src;});
-            });
-            hitTestSourceRequested=true;
+
+          if (!hitRequested && session) {
+            session.requestReferenceSpace('viewer').then(vs =>
+              session.requestHitTestSource({space:vs}).then(s => hitSource=s)
+            );
+            hitRequested = true;
           }
+
           if (!placed) {
-            const maxFrames = isNightMode?FRAMES_NIGHT:FRAMES_DAY;
-            const maxDrift  = isNightMode?DRIFT_NIGHT:DRIFT_DAY;
-            let gotHit=false;
-            if (hitTestSource) {
-              const results=frame.getHitTestResults(hitTestSource);
-              if (results.length>0) {
-                const pose=results[0].getPose(refSpace);
-                reticle.visible=true; reticle.matrix.fromArray(pose.transform.matrix);
-                const hitPos=new THREE.Vector3().setFromMatrixPosition(reticle.matrix);
-                const drift=hitPos.distanceTo(lastHitPos);
-                if(drift<maxDrift) stableCount++;
-                else stableCount=isNightMode?Math.max(0,stableCount-1):0;
-                lastHitPos.copy(hitPos); gotHit=true;
-                const pct=Math.min(100,(stableCount/maxFrames)*100);
+            const maxF = isNight ? FRAMES_NIGHT : FRAMES_DAY;
+            const maxD = isNight ? DRIFT_NIGHT  : DRIFT_DAY;
+            let gotHit = false;
+
+            if (hitSource) {
+              const hits = frame.getHitTestResults(hitSource);
+              if (hits.length) {
+                const pose = hits[0].getPose(refSpace);
+                reticle.visible = true;
+                reticle.matrix.fromArray(pose.transform.matrix);
+                const hp = new THREE.Vector3().setFromMatrixPosition(reticle.matrix);
+                const drift = hp.distanceTo(lastHit);
+                stableCount = drift < maxD ? stableCount+1 : (isNight ? Math.max(0,stableCount-1) : 0);
+                lastHit.copy(hp); gotHit = true;
+                const pct = Math.min(100,(stableCount/maxF)*100);
                 setRing(pct);
-                showStatus((isNightMode?'🌙 Night mode — detecting floor…':'🔍 Detecting floor…')+'  '+Math.round(pct)+'%');
-                if(stableCount>=maxFrames) placeCity('hittest');
+                showStatus((isNight?'🌙 Night mode…':'🔍 Detecting floor…')+' '+Math.round(pct)+'%');
+                if (stableCount >= maxF) placeCity('hittest');
               } else {
-                reticle.visible=false;
-                stableCount=isNightMode?Math.max(0,stableCount-1):0;
-                setRing(Math.min(100,(stableCount/maxFrames)*100));
+                reticle.visible = false;
+                stableCount = isNight ? Math.max(0,stableCount-1) : 0;
+                setRing(Math.min(100,(stableCount/maxF)*100));
                 showStatus('📱 Point camera at the floor…');
               }
             }
-            if(!gotHit&&sessionStartTime!==null&&performance.now()-sessionStartTime>FALLBACK_MS) placeCity('fallback');
+            if (!gotHit && sessionStart && performance.now()-sessionStart > FALLBACK_MS) placeCity('fallback');
           }
         }
-        animateLanterns(timestamp);
-        animateLights(timestamp);
-        animateParticles(timestamp);
-        renderer.render(scene,camera);
-      }
 
-      // ── Place city ────────────────────────────────────────────────────────
+        animLanterns(ts);
+        animLights(ts);
+        animParticles(ts);
+        renderer.render(scene, camera);
+      });
+
+      /* ── Place city ────────────────────────────────────────────────────── */
       function placeCity(method) {
         placed=true; reticle.visible=false; elRing.style.display='none';
-        const world=new THREE.Group();
-        if(method==='hittest'){
+        const world = new THREE.Group();
+
+        if (method==='hittest') {
           world.position.setFromMatrixPosition(reticle.matrix);
-          const m=reticle.matrix.elements;
-          world.rotation.y=Math.atan2(m[8],m[10]);
+          const e = reticle.matrix.elements;
+          world.rotation.y = Math.atan2(e[8], e[10]);
         } else {
-          const camPos=new THREE.Vector3(); const camDir=new THREE.Vector3();
-          camera.getWorldPosition(camPos); camera.getWorldDirection(camDir);
-          camDir.y=0; if(camDir.lengthSq()<0.001) camDir.set(0,0,-1); camDir.normalize();
-          world.position.set(camPos.x+camDir.x*1.5,camPos.y-1.6,camPos.z+camDir.z*1.5);
-          world.rotation.y=Math.atan2(camDir.x,camDir.z)+Math.PI;
+          const cp=new THREE.Vector3(), cd=new THREE.Vector3();
+          camera.getWorldPosition(cp); camera.getWorldDirection(cd);
+          cd.y=0; if(cd.lengthSq()<0.001) cd.set(0,0,-1); cd.normalize();
+          world.position.set(cp.x+cd.x*1.5, cp.y-1.6, cp.z+cd.z*1.5);
+          world.rotation.y = Math.atan2(cd.x,cd.z)+Math.PI;
         }
-        scene.add(world); buildCity(world);
+
+        scene.add(world);
+        buildCity(world);
+
         elTick.style.transform='translate(-50%,-50%) scale(1)'; elTick.style.opacity='1';
-        setTimeout(()=>{elTick.style.opacity='0';elTick.style.transform='translate(-50%,-50%) scale(0.8)';},1200);
+        setTimeout(()=>{ elTick.style.opacity='0'; elTick.style.transform='translate(-50%,-50%) scale(0.8)'; },1300);
         showStatus('🪷 Vesak City placed'+(method==='fallback'?' (floor estimated)':''));
-        setTimeout(hideStatus,2800);
+        setTimeout(hideStatus, 3000);
       }
 
-      // ── Build scene ───────────────────────────────────────────────────────
-      function buildCity(world) {
-        addFloorDeco(world);
-        addLotusPath(world);
-        addBuddhaStatue(world);
-        addStupa(world);
-        addVesakLanterns(world);
-        addLotusLanterns(world);
-        addPathPoles(world);
-        addFlyingLanterns(world, 16);
-        addGardenLights(world);
-        addFireflyGlow(world);
+      /* ════════════════════════════════════════════════════════════════════
+         BUILD CITY
+         Layout (looking forward = -Z):
+           • Buddha statue     : left  (-2.5, 0, -5)
+           • Stupa             : right (+3.0, 0, -5.5)
+           • Vesak lanterns    : centre cluster, between them at back
+           • Lotus path        : centre aisle z=-1.5 to -11
+           • Lotus lanterns    : sides + far back
+           • Path poles        : both sides of aisle
+           • Flying lanterns   : rising above whole scene
+           • Garden orbs       : ambient warm lights
+           • Fireflies         : drifting particles
+      ═══════════════════════════════════════════════════════════════════ */
+      function buildCity(w) {
+        floorDeco(w);
+        lotusPath(w);
+        buddhaStatue(w);
+        stupaRight(w);
+        vesakLanternCluster(w);
+        lotusLanterns(w);
+        pathPoles(w);
+        flyingLanternGroup(w, 18);
+        gardenOrbs(w);
+        fireflyCloud(w);
       }
 
-      function addFloorDeco(parent) {
-        parent.add(new THREE.Mesh(
-          new THREE.CircleGeometry(5,64).rotateX(-Math.PI/2),
-          new THREE.MeshBasicMaterial({color:0xffd580,transparent:true,opacity:0.05,side:THREE.DoubleSide})
+      /* Floor mandala glow */
+      function floorDeco(p) {
+        p.add(new THREE.Mesh(
+          new THREE.CircleGeometry(5.5,72).rotateX(-Math.PI/2),
+          new THREE.MeshBasicMaterial({color:0xffd580,transparent:true,opacity:0.04,side:THREE.DoubleSide})
         ));
-        for(let r=1;r<=4;r++){
-          parent.add(new THREE.Mesh(
-            new THREE.RingGeometry(r*1.1,r*1.1+0.02,64).rotateX(-Math.PI/2),
-            new THREE.MeshBasicMaterial({color:0xffc84a,transparent:true,opacity:0.1,side:THREE.DoubleSide})
+        [1.2,2.3,3.5,4.7].forEach(r => {
+          p.add(new THREE.Mesh(
+            new THREE.RingGeometry(r,r+0.025,72).rotateX(-Math.PI/2),
+            new THREE.MeshBasicMaterial({color:0xffc84a,transparent:true,opacity:0.09,side:THREE.DoubleSide})
           ));
-        }
-      }
-
-      function addBuddhaStatue(parent) {
-        const m=fitModel('buddha',1.8);
-        m.position.set(-2.5,0,-5); m.rotation.y=Math.PI*0.15; parent.add(m);
-        // Halo
-        const halo=new THREE.Mesh(new THREE.RingGeometry(0.55,0.65,40),new THREE.MeshBasicMaterial({color:0xffe070,transparent:true,opacity:0.7,side:THREE.DoubleSide}));
-        halo.position.set(-2.5,2.1,-5.05); halo.rotation.x=-0.1; parent.add(halo);
-        const l=new THREE.PointLight(0xffd580,1.2,3.5); l.position.set(-2.5,0.3,-5); parent.add(l);
-        pathLights.push({light:l,phase:0.5});
-      }
-
-      function addStupa(parent) {
-        const m=fitModel('stupa',2.2);
-        m.position.set(2.8,0,-5.5); m.rotation.y=-Math.PI*0.1; parent.add(m);
-        const l=new THREE.PointLight(0xfff8cc,1.0,4); l.position.set(2.8,0.5,-5.5); parent.add(l);
-        pathLights.push({light:l,phase:1.2});
-        const pl=new THREE.PointLight(0xffeeaa,0.6,2); pl.position.set(2.8,2.5,-5.5); parent.add(pl);
-        pathLights.push({light:pl,phase:2.1});
-      }
-
-      function addVesakLanterns(parent) {
-        [[0,0,-7.5],[-1,0,-8.5],[1,0,-8.5],[-0.5,0,-6.5],[0.5,0,-6.5],[0,0,-9.5]].forEach(([x,y,z],i)=>{
-          const m=fitModel('vesakLantern', i===0?0.8:0.55);
-          m.position.set(x,y,z); m.rotation.y=(Math.random()-0.5)*0.5; parent.add(m);
-          const l=new THREE.PointLight(0xff6633,0.9,3); l.position.set(x,y+0.5,z); parent.add(l);
-          pathLights.push({light:l,phase:i*0.8});
         });
-        // String lights between Buddha and Stupa
-        for(let i=0;i<=12;i++){
-          const t=i/12;
-          const bulb=new THREE.Mesh(new THREE.SphereGeometry(0.05,6,6),new THREE.MeshStandardMaterial({color:0xff9933,emissive:0xff6600,emissiveIntensity:2.5,transparent:true,opacity:0.95}));
-          bulb.position.set(-2.5+t*5.3, 2.0-Math.sin(t*Math.PI)*0.35, -5-t*0.5);
-          parent.add(bulb);
+      }
+
+      /* Buddha — left */
+      function buddhaStatue(p) {
+        const m = getModel('buddha', 1.9);
+        m.position.set(-2.5, 0, -5);
+        m.rotation.y = 0.22;        // slightly angled toward centre
+        p.add(m);
+
+        // Glowing halo disc
+        const halo = new THREE.Mesh(
+          new THREE.RingGeometry(0.58,0.72,48),
+          new THREE.MeshBasicMaterial({color:0xffe070,transparent:true,opacity:0.65,side:THREE.DoubleSide})
+        );
+        halo.position.set(0, 2.15, -0.08); halo.rotation.x = -0.15;
+        m.add(halo);
+
+        const l = new THREE.PointLight(0xffd580, 1.3, 3.5);
+        l.position.set(-2.5, 0.5, -5); p.add(l);
+        pathLights.push({light:l, phase:0.4});
+
+        // Incense glow
+        const inc = new THREE.Mesh(new THREE.SphereGeometry(0.06,8,8),
+          new THREE.MeshStandardMaterial({color:0xffaa44,emissive:0xff8800,emissiveIntensity:2.5,transparent:true,opacity:0.9}));
+        inc.position.set(-2.5,0.65,-4.6); p.add(inc);
+      }
+
+      /* Stupa — right */
+      function stupaRight(p) {
+        const m = getModel('stupa', 2.4);
+        m.position.set(3.0, 0, -5.5);
+        m.rotation.y = -0.18;
+        p.add(m);
+
+        const l1 = new THREE.PointLight(0xfff8cc, 1.1, 4.5);
+        l1.position.set(3.0, 0.5, -5.5); p.add(l1);
+        pathLights.push({light:l1, phase:1.1});
+
+        const l2 = new THREE.PointLight(0xffeeaa, 0.7, 2.5);
+        l2.position.set(3.0, 2.8, -5.5); p.add(l2);
+        pathLights.push({light:l2, phase:2.3});
+      }
+
+      /* Vesak lantern cluster — centre back between Buddha & Stupa */
+      function vesakLanternCluster(p) {
+        const spots = [
+          [0,   0,  -7.5, 0.75],
+          [-1.1,0,  -8.5, 0.55],
+          [ 1.1,0,  -8.5, 0.55],
+          [-0.5,0,  -6.5, 0.50],
+          [ 0.5,0,  -6.5, 0.50],
+          [ 0,  0,  -9.5, 0.50],
+          [-1.8,0,  -7.0, 0.45],
+          [ 1.8,0,  -7.0, 0.45],
+        ];
+        spots.forEach(([x,y,z,h],i) => {
+          const m = getModel('vesakLantern', h);
+          m.position.set(x,y,z);
+          m.rotation.y = (Math.random()-0.5)*0.6;
+          p.add(m);
+          const l = new THREE.PointLight(0xff6633, 0.85, 3);
+          l.position.set(x, y+0.5, z); p.add(l);
+          pathLights.push({light:l, phase:i*0.75});
+        });
+
+        // String lights connecting Buddha ↔ Stupa
+        for (let i=0; i<=14; i++) {
+          const t = i/14;
+          const bead = new THREE.Mesh(
+            new THREE.SphereGeometry(0.052,6,6),
+            new THREE.MeshStandardMaterial({color:0xff9933,emissive:0xff6600,emissiveIntensity:2.8,transparent:true,opacity:0.95})
+          );
+          bead.position.set(
+            -2.5 + t*5.5,
+            2.1 - Math.sin(t*Math.PI)*0.4,
+            -5.0 - t*0.5
+          );
+          p.add(bead);
         }
       }
 
-      function addLotusPath(parent) {
-        for(let i=0;i<10;i++){
-          const key=i%2===0?'lotus1':'lotus2';
-          const m=fitModel(key,0.22+Math.random()*0.1);
-          const sx=i%2===0?-0.6:0.6;
-          m.position.set(sx+(Math.random()-0.5)*0.15, 0.02, -1.5-i*1.1+(Math.random()-0.5)*0.2);
-          m.rotation.y=Math.random()*Math.PI*2; parent.add(m);
+      /* Lotus flower path — central aisle */
+      function lotusPath(p) {
+        // Main aisle alternating sides
+        for (let i=0; i<11; i++) {
+          const key = i%2===0 ? 'lotus1' : 'lotus2';
+          const h   = 0.18 + Math.random()*0.10;
+          const m   = getModel(key, h);
+          const sx  = i%2===0 ? -0.62 : 0.62;
+          m.position.set(sx+(Math.random()-0.5)*0.12, 0, -1.5-i*1.05+(Math.random()-0.5)*0.18);
+          m.rotation.y = Math.random()*Math.PI*2;
+          p.add(m);
         }
-        [[-1.8,0,-3],[1.8,0,-3],[-2.2,0,-6],[2.2,0,-6],[-1.5,0,-9],[1.5,0,-9],[-3,0,-4.5],[3,0,-4.5]].forEach(([x,y,z],idx)=>{
-          const n=2+Math.floor(Math.random()*3);
-          for(let j=0;j<n;j++){
-            const a=(j/n)*Math.PI*2;
-            const m=fitModel(idx%2===0?'lotus1':'lotus2',0.14+Math.random()*0.07);
-            m.position.set(x+Math.cos(a)*0.38,0.02,z+Math.sin(a)*0.38);
-            m.rotation.y=Math.random()*Math.PI*2; parent.add(m);
+
+        // Side clusters
+        [
+          [-1.9,0,-2.5],[1.9,0,-2.5],
+          [-2.3,0,-5.5],[2.3,0,-5.5],
+          [-1.6,0,-8.5],[1.6,0,-8.5],
+          [-3.2,0,-4.0],[3.2,0,-4.0],
+          [-3.0,0,-7.5],[3.0,0,-7.5],
+        ].forEach(([x,y,z],idx) => {
+          const n = 2 + Math.floor(Math.random()*3);
+          for (let j=0; j<n; j++) {
+            const a = (j/n)*Math.PI*2;
+            const m = getModel(idx%2===0?'lotus1':'lotus2', 0.12+Math.random()*0.07);
+            m.position.set(x+Math.cos(a)*0.35, 0, z+Math.sin(a)*0.35);
+            m.rotation.y = Math.random()*Math.PI*2;
+            p.add(m);
           }
         });
       }
 
-      function addLotusLanterns(parent) {
-        [[-1.2,0,-10.5],[1.2,0,-10.5],[-2.5,0,-8.5],[2.5,0,-8.5],[-0.5,0,-11.5],[0.5,0,-11.5],[-3.5,0,-3.5],[3.5,0,-3.5]].forEach(([x,y,z],i)=>{
-          const m=fitModel('lotusLantern',0.35);
-          m.position.set(x,y,z); m.rotation.y=Math.random()*Math.PI*2; parent.add(m);
-          const l=new THREE.PointLight(0xffccaa,0.7,2.5); l.position.set(x,y+0.3,z); parent.add(l);
-          pathLights.push({light:l,phase:i*0.6+1});
+      /* Lotus lanterns — sides + far end */
+      function lotusLanterns(p) {
+        [
+          [-1.3,0,-10],[1.3,0,-10],
+          [-2.6,0,-8.8],[2.6,0,-8.8],
+          [-0.6,0,-11.5],[0.6,0,-11.5],
+          [-3.8,0,-3.2],[3.8,0,-3.2],
+          [-3.8,0,-6.5],[3.8,0,-6.5],
+          [0,0,-12.5],
+        ].forEach(([x,y,z],i) => {
+          const m = getModel('lotusLantern', 0.36);
+          m.position.set(x,y,z);
+          m.rotation.y = Math.random()*Math.PI*2;
+          p.add(m);
+          const l = new THREE.PointLight(0xffccaa, 0.72, 2.8);
+          l.position.set(x,y+0.3,z); p.add(l);
+          pathLights.push({light:l, phase:i*0.55+1});
         });
       }
 
-      function addPathPoles(parent) {
-        [-1.2,1.2].forEach(sx=>{
-          for(let i=0;i<7;i++){
-            const z=-1.5-i*1.6;
-            const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.04,2,8),new THREE.MeshStandardMaterial({color:0x7a4a20}));
-            pole.position.set(sx,1,z); parent.add(pole);
-            const ball=new THREE.Mesh(new THREE.SphereGeometry(0.09,10,10),new THREE.MeshStandardMaterial({color:0xffaa33,emissive:0xff8800,emissiveIntensity:1.5,transparent:true,opacity:0.92}));
-            ball.position.set(sx,2.05,z); parent.add(ball);
-            const l=new THREE.PointLight(0xffa040,0.6,2.2); l.position.set(sx,2,z); parent.add(l);
-            pathLights.push({light:l,phase:Math.random()*Math.PI*2});
+      /* Path poles with glowing tops */
+      function pathPoles(p) {
+        [-1.25,1.25].forEach(sx => {
+          for (let i=0; i<8; i++) {
+            const z = -1.4-i*1.5;
+            const pole = new THREE.Mesh(
+              new THREE.CylinderGeometry(0.03,0.04,2.1,8),
+              new THREE.MeshStandardMaterial({color:0x7a4a20,roughness:0.85})
+            );
+            pole.position.set(sx,1.05,z); p.add(pole);
+
+            const ball = new THREE.Mesh(
+              new THREE.SphereGeometry(0.092,10,10),
+              new THREE.MeshStandardMaterial({color:0xffaa33,emissive:0xff8800,emissiveIntensity:1.8,transparent:true,opacity:0.93})
+            );
+            ball.position.set(sx,2.15,z); p.add(ball);
+
+            const l = new THREE.PointLight(0xffa040,0.62,2.4);
+            l.position.set(sx,2.1,z); p.add(l);
+            pathLights.push({light:l, phase:Math.random()*Math.PI*2});
           }
         });
       }
 
-      function addFlyingLanterns(parent,count) {
-        for(let i=0;i<count;i++){
-          const l=createSkyLantern();
-          l.position.set((Math.random()-0.5)*7,0.5+Math.random()*0.5,-1.5-Math.random()*9);
-          l.userData={speed:0.012+Math.random()*0.018,driftX:(Math.random()-0.5)*0.0015,driftZ:-0.0012-Math.random()*0.001,phase:Math.random()*Math.PI*2};
-          flyingLanterns.push(l); parent.add(l);
+      /* Flying sky lanterns */
+      function flyingLanternGroup(p, count) {
+        for (let i=0; i<count; i++) {
+          const l = mkSkyLantern();
+          l.position.set((Math.random()-0.5)*8, 0.4+Math.random()*0.5, -1-Math.random()*10);
+          l.userData = {
+            speed : 0.011+Math.random()*0.019,
+            driftX: (Math.random()-0.5)*0.0014,
+            driftZ: -0.001-Math.random()*0.001,
+            phase : Math.random()*Math.PI*2
+          };
+          flyingLanterns.push(l); p.add(l);
         }
       }
 
-      function createSkyLantern() {
+      function mkSkyLantern() {
         const g=new THREE.Group();
-        const b=new THREE.Mesh(new THREE.SphereGeometry(0.2,12,10),new THREE.MeshStandardMaterial({color:0xffeb99,emissive:0xffd36b,emissiveIntensity:1.4,transparent:true,opacity:0.88}));
-        b.scale.set(1,1.35,1); g.add(b);
-        const r=new THREE.Mesh(new THREE.TorusGeometry(0.15,0.022,8,24),new THREE.MeshStandardMaterial({color:0x7a4a2c}));
-        r.rotation.x=Math.PI/2; r.position.y=-0.26; g.add(r);
-        const f=new THREE.Mesh(new THREE.ConeGeometry(0.055,0.18,8),new THREE.MeshStandardMaterial({color:0xffa533,emissive:0xff7700,emissiveIntensity:3.5}));
-        f.position.y=-0.18; f.rotation.x=Math.PI; g.add(f);
-        g.add(new THREE.PointLight(0xffb060,1.2,5));
+        const b=new THREE.Mesh(new THREE.SphereGeometry(0.21,12,10),
+          new THREE.MeshStandardMaterial({color:0xffeb99,emissive:0xffd36b,emissiveIntensity:1.5,transparent:true,opacity:0.87}));
+        b.scale.set(1,1.38,1); g.add(b);
+        const r=new THREE.Mesh(new THREE.TorusGeometry(0.16,0.022,8,24),
+          new THREE.MeshStandardMaterial({color:0x7a4a2c}));
+        r.rotation.x=Math.PI/2; r.position.y=-0.28; g.add(r);
+        const f=new THREE.Mesh(new THREE.ConeGeometry(0.056,0.19,8),
+          new THREE.MeshStandardMaterial({color:0xffa533,emissive:0xff7700,emissiveIntensity:4}));
+        f.position.y=-0.19; f.rotation.x=Math.PI; g.add(f);
+        g.add(new THREE.PointLight(0xffb060,1.3,5.5));
         return g;
       }
 
-      function addGardenLights(parent) {
-        [[-1.8,0.4,-1.5],[1.8,0.4,-1.5],[-3.2,0.4,-4.5],[3.2,0.4,-4.5],[-1.5,0.4,-7.5],[1.5,0.4,-7.5],[-2,0.4,-10],[2,0.4,-10],[0,0.4,-1]].forEach(([x,y,z],i)=>{
-          const orb=new THREE.Mesh(new THREE.SphereGeometry(0.09,10,10),new THREE.MeshStandardMaterial({color:0xffd580,emissive:0xffd150,emissiveIntensity:1.1,transparent:true,opacity:0.9}));
-          orb.position.set(x,y,z); parent.add(orb);
-          const l=new THREE.PointLight(0xffd580,0.65,3); l.position.set(x,y,z); parent.add(l);
-          pathLights.push({light:l,phase:i*0.4+0.2});
+      /* Ambient garden orbs */
+      function gardenOrbs(p) {
+        [
+          [-1.9,0.42,-1.6],[1.9,0.42,-1.6],
+          [-3.3,0.42,-4.8],[3.3,0.42,-4.8],
+          [-1.6,0.42,-7.8],[1.6,0.42,-7.8],
+          [-2.1,0.42,-10.5],[2.1,0.42,-10.5],
+          [0,0.42,-1.0],[0,0.42,-13.0],
+        ].forEach(([x,y,z],i) => {
+          const orb=new THREE.Mesh(new THREE.SphereGeometry(0.09,10,10),
+            new THREE.MeshStandardMaterial({color:0xffd580,emissive:0xffd150,emissiveIntensity:1.2,transparent:true,opacity:0.9}));
+          orb.position.set(x,y,z); p.add(orb);
+          const l=new THREE.PointLight(0xffd580,0.68,3.2);
+          l.position.set(x,y,z); p.add(l);
+          pathLights.push({light:l, phase:i*0.38+0.2});
         });
       }
 
-      function addFireflyGlow(parent) {
+      /* Firefly particle cloud */
+      function fireflyCloud(p) {
         const g=new THREE.Group();
-        for(let i=0;i<30;i++){
-          const f=new THREE.Mesh(new THREE.SphereGeometry(0.035,8,8),new THREE.MeshStandardMaterial({color:0xffe7aa,emissive:0xffd680,emissiveIntensity:1.5,transparent:true,opacity:0.9}));
-          f.position.set((Math.random()-0.5)*8,0.15+Math.random()*1.8,-0.5-Math.random()*10);
+        for(let i=0;i<32;i++){
+          const f=new THREE.Mesh(new THREE.SphereGeometry(0.036,8,8),
+            new THREE.MeshStandardMaterial({color:0xffe7aa,emissive:0xffd680,emissiveIntensity:1.6,transparent:true,opacity:0.9}));
+          f.position.set((Math.random()-0.5)*9, 0.15+Math.random()*2.0, -0.5-Math.random()*11);
           g.add(f);
         }
-        parent.add(g); particleGroups.push(g);
+        p.add(g); particles.push(g);
       }
 
-      function animateLanterns(t) {
-        flyingLanterns.forEach(l=>{
-          l.position.y+=l.userData.speed;
-          l.position.x+=l.userData.driftX+Math.sin(t*0.001+l.userData.phase)*0.0007;
-          l.position.z+=l.userData.driftZ;
-          l.rotation.y+=0.003;
-          l.rotation.z=Math.sin(t*0.001+l.userData.phase)*0.05;
-          if(l.position.y>12){l.position.y=0.6;l.position.x=(Math.random()-0.5)*7;l.position.z=-1.5-Math.random()*9;}
+      /* ── Animations ─────────────────────────────────────────────────────── */
+      function animLanterns(t) {
+        flyingLanterns.forEach(l => {
+          l.position.y += l.userData.speed;
+          l.position.x += l.userData.driftX + Math.sin(t*0.001+l.userData.phase)*0.0007;
+          l.position.z += l.userData.driftZ;
+          l.rotation.y += 0.003;
+          l.rotation.z  = Math.sin(t*0.001+l.userData.phase)*0.05;
+          if (l.position.y > 14) {
+            l.position.y = 0.5;
+            l.position.x = (Math.random()-0.5)*8;
+            l.position.z = -1-Math.random()*10;
+          }
         });
       }
-      function animateLights(t) {
-        pathLights.forEach(({light,phase})=>{
-          light.intensity=0.55+0.28*Math.sin(t*0.006+phase);
-          light.color.setHSL(0.09,0.9,0.52+0.12*Math.sin(t*0.01+phase));
+      function animLights(t) {
+        pathLights.forEach(({light,phase}) => {
+          light.intensity = 0.52 + 0.30*Math.sin(t*0.006+phase);
+          light.color.setHSL(0.09, 0.9, 0.50+0.13*Math.sin(t*0.011+phase));
         });
       }
-      function animateParticles(t) {
-        particleGroups.forEach((g,idx)=>{
-          g.children.forEach((p,i)=>{
-            p.position.y+=0.0018+0.001*idx;
-            p.position.x+=Math.sin(t*0.0007+i)*0.0006;
-            p.material.opacity=0.5+0.5*Math.sin(t*0.002+i);
-            if(p.position.y>2.5) p.position.y=0.15;
+      function animParticles(t) {
+        particles.forEach(g => {
+          g.children.forEach((p,i) => {
+            p.position.y += 0.0019;
+            p.position.x += Math.sin(t*0.0007+i)*0.0006;
+            p.material.opacity = 0.45 + 0.55*Math.abs(Math.sin(t*0.0018+i));
+            if (p.position.y > 2.7) p.position.y = 0.15;
           });
         });
       }
+
+      /* ── Status helpers ─────────────────────────────────────────────────── */
+      function showStatus(msg){ elStatus.textContent=msg; elStatus.style.display='block'; elStatus.style.opacity='1'; }
+      function hideStatus(){ elStatus.style.opacity='0'; setTimeout(()=>elStatus.style.display='none',400); }
+      function setRing(pct){
+        elRingFill.style.strokeDashoffset = CIRCUM*(1-pct/100);
+        elRingPct.textContent = Math.round(pct)+'%';
+        elRingFill.style.stroke = `hsl(${pct<50?174:174+(pct-50)*1.8},100%,55%)`;
+      }
+
+      /* ── Start ──────────────────────────────────────────────────────────── */
+      await preload();
+
     </script>
   </body>
 </html>
